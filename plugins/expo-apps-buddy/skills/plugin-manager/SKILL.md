@@ -59,10 +59,15 @@ Then tell the user to run the reload commands (see below), or run them yourself 
 
 After pushing updates to GitHub, the user (or you) need to tell Claude Code to fetch the new version.
 
+**IMPORTANT: Always run the marketplace update FIRST, then the plugin update.** The marketplace update re-fetches the index from GitHub so Claude Code knows a new version exists. Without it, `plugin update` will say "already at latest version" even though a newer one was pushed.
+
 ### From the terminal (CLI):
 
 ```bash
+# Step 1: Re-fetch the marketplace index from GitHub (MUST be first)
 claude plugin marketplace update cc-plugins
+
+# Step 2: Update the plugin to the new version
 claude plugin update expo-apps-buddy@cc-plugins
 ```
 

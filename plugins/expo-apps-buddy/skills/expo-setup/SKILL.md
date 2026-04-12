@@ -259,12 +259,36 @@ This project follows the `expo:building-native-ui` skill. Key rules:
 - `assets/` — Images and icons
 ```
 
-### Step 8: Start the Preview
+### Step 8: Start Metro with Tunnel + Web Preview
 
+Start both the web preview AND a tunnel so the user can test on their phone immediately.
+
+**8a. Start the web preview** for in-browser testing:
 1. Use `preview_start` with name `"expo-dev"` to launch the web server
 2. Wait for the bundler to finish (check `preview_logs` for "Bundled" — first bundle can take 10-20s)
 3. Take a `preview_screenshot` to show the user their running app
 4. Also resize to mobile and take another screenshot
+
+**8b. Start tunnel mode** for phone testing (always do this):
+```bash
+kill $(lsof -ti :8081) 2>/dev/null
+export EXPO_LOG_FILE="/tmp/expo-tunnel-$(date +%s).log"
+npx expo start --tunnel > "$EXPO_LOG_FILE" 2>&1 &
+EXPO_PID=$!
+
+# Wait for tunnel
+for i in $(seq 1 30); do
+  if grep -q "Tunnel ready" "$EXPO_LOG_FILE" 2>/dev/null; then
+    echo "Tunnel is ready!"; break
+  fi
+  sleep 1
+done
+
+# Get the URL
+curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
+```
+
+All Metro output (device connections, JS errors, bundle status) is captured in `$EXPO_LOG_FILE`. Read it proactively — don't wait for the user to report problems.
 
 ### Step 9: Welcome Message
 

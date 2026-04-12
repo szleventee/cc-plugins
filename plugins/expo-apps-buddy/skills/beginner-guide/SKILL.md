@@ -191,6 +191,56 @@ When a beginner starts a session or says hi:
 2. Remind them where they left off: "Last time we [what they did]. Want to keep going or try something new?"
 3. If this is their first time, welcome them warmly and show them what they can do
 
+## Starting Metro (IMPORTANT — always follow this)
+
+**Always start Metro bundler in tunnel mode with logs piped to a file.** This is the default, not an optional step. Tunnel mode lets the user test on their phone remotely, and the log file lets you see errors, device connections, and bundle status without the user having to copy-paste anything.
+
+### Standard Metro startup sequence:
+
+```bash
+# 1. Kill any existing Expo process
+kill $(lsof -ti :8081) 2>/dev/null
+
+# 2. Create the log file
+export EXPO_LOG_FILE="/tmp/expo-tunnel-$(date +%s).log"
+
+# 3. Start Metro with tunnel, pipe ALL output to the log file
+npx expo start --tunnel > "$EXPO_LOG_FILE" 2>&1 &
+EXPO_PID=$!
+
+# 4. Wait for tunnel to be ready
+for i in $(seq 1 30); do
+  if grep -q "Tunnel ready" "$EXPO_LOG_FILE" 2>/dev/null; then
+    echo "Tunnel is ready!"; break
+  fi
+  sleep 1
+done
+
+# 5. Get the tunnel URL
+curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
+```
+
+### Monitoring logs — do this proactively:
+
+```bash
+# Check latest output
+tail -40 "$EXPO_LOG_FILE"
+
+# Check for errors
+grep -i "error\|warn\|failed\|exception" "$EXPO_LOG_FILE"
+```
+
+**When to check:**
+- After the user opens the app on their phone
+- After any code change (check hot reload succeeded)
+- When the user reports something is wrong
+- Periodically during active development
+
+**If the log file variable is lost** (new shell), find the most recent one:
+```bash
+tail -40 "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+```
+
 ## Project Rules
 
 - Always follow `expo:building-native-ui` patterns (load the skill silently)
@@ -199,3 +249,4 @@ When a beginner starts a session or says hi:
 - Always show a preview screenshot after changes
 - Auto-save after every working change
 - Never leave the project in a broken state
+- **Always start Metro in tunnel mode with logs to a temp file** (see above)

@@ -137,7 +137,16 @@ Follow this flow:
 ## When Something Breaks
 
 1. **Stay calm and friendly.** "Hmm, something's not working right. Let me take a look! 🔍"
-2. **Check the logs** for errors.
+2. **Check the Expo log file** for errors. If the app is running via tunnel, the log file path is stored in `$EXPO_LOG_FILE` (typically `/tmp/expo-tunnel-*.log`). Read it:
+   ```bash
+   # Find the most recent expo log
+   ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1
+   # Then read the last 50 lines for recent errors
+   tail -50 "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+   # Or grep for errors specifically
+   grep -i "error\|warn\|failed\|exception" "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+   ```
+   If running via web preview, use `preview_logs` and `preview_console_logs` instead.
 3. **Explain what happened simply.** "The app got confused because I accidentally told it to use something that doesn't exist. Easy fix!"
 4. **Fix it and show the result.**
 5. **If you can't fix it quickly**, offer to undo: "I'm having trouble fixing this. Want me to go back to the last save point where everything worked?"

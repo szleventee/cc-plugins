@@ -306,15 +306,72 @@ After everything is set up, tell the user:
 
 When the user asks to test on their phone, follow this process:
 
+### Starting the tunnel
+
 1. **Kill any existing Expo process** on port 8081 first: `kill $(lsof -ti :8081) 2>/dev/null`
-2. **Start Expo with tunnel:** `npx expo start --tunnel` (run in background with `&`)
-3. **Wait ~15-20 seconds** for the tunnel to connect (look for "Tunnel ready." in output)
-4. **Get the tunnel URL** by querying the ngrok API:
+
+2. **Create a log file** so you can monitor everything Metro outputs — device connections, bundle progress, errors from the phone, JS exceptions, etc.:
+   ```bash
+   export EXPO_LOG_FILE="/tmp/expo-tunnel-$(date +%s).log"
+   echo "Expo tunnel log started at $(date)" > "$EXPO_LOG_FILE"
+   ```
+
+3. **Start Expo with tunnel, piping ALL output to the log file:**
+   ```bash
+   npx expo start --tunnel > "$EXPO_LOG_FILE" 2>&1 &
+   EXPO_PID=$!
+   echo "Expo PID: $EXPO_PID, Log: $EXPO_LOG_FILE"
+   ```
+
+4. **Wait for the tunnel to be ready** by tailing the log (timeout after 30s):
+   ```bash
+   for i in $(seq 1 30); do
+     if grep -q "Tunnel ready" "$EXPO_LOG_FILE" 2>/dev/null; then
+       echo "Tunnel is ready!"; break
+     fi
+     sleep 1
+   done
+   ```
+
+5. **Get the tunnel URL** by querying the ngrok API:
    ```bash
    curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
    ```
-5. **Give the user the URL** in this format: `exp://<tunnel-domain>` (replace `https://` with `exp://`)
-6. Tell them to open it in Expo Go, or paste the https URL in their phone browser
+
+6. **Give the user the URL** in this format: `exp://<tunnel-domain>` (replace `https://` with `exp://`). Tell them to open it in Expo Go, or paste the https URL in their phone browser.
+
+### Monitoring logs (IMPORTANT)
+
+The log file at `$EXPO_LOG_FILE` captures everything Metro outputs — this is your window into what's happening on the user's phone. **Read it regularly** to stay aware of the app's state:
+
+```bash
+# Check the latest output (last 40 lines)
+tail -40 "$EXPO_LOG_FILE"
+
+# Watch for errors specifically
+grep -i "error\|warn\|failed\|exception" "$EXPO_LOG_FILE"
+
+# See device connections
+grep -i "connected\|device\|iOS\|Android" "$EXPO_LOG_FILE"
+```
+
+**When to check the logs:**
+- Right after the user says they opened the app — look for the bundle request and any load errors
+- After any code change — check if the hot reload succeeded or threw errors
+- When the user reports something is wrong — the log will show JS exceptions, network errors, etc.
+- Periodically during active development — scan for warnings you should proactively fix
+
+**If the user reports a crash or error on their phone**, immediately read the full log:
+```bash
+cat "$EXPO_LOG_FILE"
+```
+This will contain the stack trace and error details from the device, even though the phone is remote.
+
+### Stopping the tunnel
+
+```bash
+kill $EXPO_PID 2>/dev/null
+```
 
 **Note:** `npx expo start` in a non-interactive terminal (like Claude's Bash tool) cannot display QR codes. Always extract and provide the tunnel URL directly instead.
 

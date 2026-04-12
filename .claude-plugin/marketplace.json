@@ -1,9 +1,10 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "cc-plugins",
-  "description": "Claude Code plugins by levisz — tools and skills for app development",
+  "description": "Claude Code plugins by szleventee — tools and skills for app development",
   "version": "1.0.0",
   "owner": {
-    "name": "levisz"
+    "name": "szleventee"
   },
   "plugins": [
     {
@@ -11,7 +12,7 @@
       "description": "Your friendly Expo app building buddy. Sets up projects with best practices and guides beginners through development with auto-saves, easy undo, and plain-language explanations.",
       "version": "1.0.0",
       "author": {
-        "name": "levisz"
+        "name": "szleventee"
       },
       "source": "./plugins/expo-apps-buddy",
       "category": "development"

@@ -383,7 +383,6 @@ kill $EXPO_PID 2>/dev/null
 - After ANY code change, take a preview screenshot to show the result
 - If something breaks, fix it and explain what went wrong in simple terms
 - Suggest fun next steps after completing any task
-- **Version bumping:** When making changes to this plugin's skills or config, always bump the `version` field in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (use semver — patch for fixes, minor for new features). This is how users get updates in the Claude Code desktop app.
 
 ## Troubleshooting
 

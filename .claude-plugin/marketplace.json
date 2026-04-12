@@ -1,0 +1,20 @@
+{
+  "name": "cc-plugins",
+  "description": "Claude Code plugins by levisz — tools and skills for app development",
+  "version": "1.0.0",
+  "owner": {
+    "name": "levisz"
+  },
+  "plugins": [
+    {
+      "name": "expo-apps-buddy",
+      "description": "Your friendly Expo app building buddy. Sets up projects with best practices and guides beginners through development with auto-saves, easy undo, and plain-language explanations.",
+      "version": "1.0.0",
+      "author": {
+        "name": "levisz"
+      },
+      "source": "./plugins/expo-apps-buddy",
+      "category": "development"
+    }
+  ]
+}

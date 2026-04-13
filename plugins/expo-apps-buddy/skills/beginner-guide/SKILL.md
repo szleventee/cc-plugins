@@ -140,11 +140,11 @@ Follow this flow:
 2. **Check the Expo log file** for errors. If the app is running via tunnel, the log file path is stored in `$EXPO_LOG_FILE` (typically `/tmp/expo-tunnel-*.log`). Read it:
    ```bash
    # Find the most recent expo log
-   ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1
+   ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1
    # Then read the last 50 lines for recent errors
-   tail -50 "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+   tail -50 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
    # Or grep for errors specifically
-   grep -i "error\|warn\|failed\|exception" "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+   grep -i "error\|warn\|failed\|exception" "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
    ```
    If running via web preview, use `preview_logs` and `preview_console_logs` instead.
 3. **Explain what happened simply.** "The app got confused because I accidentally told it to use something that doesn't exist. Easy fix!"
@@ -193,22 +193,48 @@ When a beginner starts a session or says hi:
 
 ## Starting Metro (IMPORTANT — always follow this)
 
-**Always start Metro bundler in tunnel mode with logs piped to a file.** This is the default, not an optional step. Tunnel mode lets the user test on their phone remotely, and the log file lets you see errors, device connections, and bundle status without the user having to copy-paste anything.
+**Always pipe Metro output to a log file** so you can see errors, device connections, and bundle status without the user having to copy-paste anything.
 
-### Standard Metro startup sequence:
+### Default: localhost mode (phone on same Wi-Fi)
+
+This is simpler, faster, and more reliable. Use this first.
 
 ```bash
 # 1. Kill any existing Expo process
 kill $(lsof -ti :8081) 2>/dev/null
 
 # 2. Create the log file
-export EXPO_LOG_FILE="/tmp/expo-tunnel-$(date +%s).log"
+export EXPO_LOG_FILE="/tmp/expo-metro-$(date +%s).log"
 
-# 3. Start Metro with tunnel, pipe ALL output to the log file
+# 3. Start Metro, pipe ALL output to the log file
+npx expo start > "$EXPO_LOG_FILE" 2>&1 &
+EXPO_PID=$!
+
+# 4. Wait for Metro to be ready
+for i in $(seq 1 20); do
+  if grep -q "Metro waiting on" "$EXPO_LOG_FILE" 2>/dev/null; then
+    echo "Metro is ready!"; break
+  fi
+  sleep 1
+done
+
+# 5. Show the LAN URL from the log
+grep "Metro waiting on" "$EXPO_LOG_FILE"
+```
+
+Tell the user to open Expo Go on their phone (same Wi-Fi) and enter the `exp://192.168.x.x:8081` URL shown in the log.
+
+### Fallback: tunnel mode (if localhost doesn't work)
+
+Only switch to tunnel if the user's phone can't connect via localhost — different network, firewall issues, mobile data, etc.
+
+```bash
+kill $(lsof -ti :8081) 2>/dev/null
+export EXPO_LOG_FILE="/tmp/expo-metro-$(date +%s).log"
 npx expo start --tunnel > "$EXPO_LOG_FILE" 2>&1 &
 EXPO_PID=$!
 
-# 4. Wait for tunnel to be ready
+# Wait for tunnel
 for i in $(seq 1 30); do
   if grep -q "Tunnel ready" "$EXPO_LOG_FILE" 2>/dev/null; then
     echo "Tunnel is ready!"; break
@@ -216,7 +242,7 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-# 5. Get the tunnel URL
+# Get the tunnel URL
 curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
 ```
 
@@ -238,7 +264,7 @@ grep -i "error\|warn\|failed\|exception" "$EXPO_LOG_FILE"
 
 **If the log file variable is lost** (new shell), find the most recent one:
 ```bash
-tail -40 "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
+tail -40 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
 ```
 
 ## Project Rules
@@ -249,4 +275,4 @@ tail -40 "$(ls -t /tmp/expo-tunnel-*.log 2>/dev/null | head -1)"
 - Always show a preview screenshot after changes
 - Auto-save after every working change
 - Never leave the project in a broken state
-- **Always start Metro in tunnel mode with logs to a temp file** (see above)
+- **Always pipe Metro output to a temp log file** (see above) so you can read errors directly

@@ -224,9 +224,13 @@ grep "Metro waiting on" "$EXPO_LOG_FILE"
 
 Tell the user to open Expo Go on their phone (same Wi-Fi) and enter the `exp://192.168.x.x:8081` URL shown in the log.
 
-### Fallback: tunnel mode (if localhost doesn't work)
+### Fallback 1: custom ngrok tunnel (PREFERRED when localhost fails)
 
-Only switch to tunnel if the user's phone can't connect via localhost — different network, firewall issues, mobile data, etc.
+If the user has a reserved ngrok domain (or is willing to set one up), use the `expo-apps-buddy:custom-ngrok-tunnel` skill. It's far more reliable than Expo's built-in `--tunnel` — stable URL, no random crashes, works from anywhere. **Always prefer this over `--tunnel`** if the user has ngrok set up.
+
+### Fallback 2: Expo's built-in `--tunnel` (last resort, often fails)
+
+Only use this if localhost doesn't work AND the user has no custom ngrok setup. It bundles an ancient `@expo/ngrok@2.3.41` that frequently errors with "Cannot read properties of undefined" — expect failures.
 
 ```bash
 kill $(lsof -ti :8081) 2>/dev/null
@@ -245,6 +249,8 @@ done
 # Get the tunnel URL
 curl -s http://localhost:4040/api/tunnels | python3 -c "import sys,json; print(json.load(sys.stdin)['tunnels'][0]['public_url'])"
 ```
+
+If this errors out, bail and recommend the custom ngrok skill instead.
 
 ### Monitoring logs — do this proactively:
 
@@ -267,6 +273,29 @@ grep -i "error\|warn\|failed\|exception" "$EXPO_LOG_FILE"
 tail -40 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
 ```
 
+## Known Issues & Fixes
+
+### react-native-screens 4.17.x+ crash on Expo SDK 54
+
+**Symptom:** App crashes immediately on load with error:
+```
+expected dynamic type 'boolean', but had type 'string'
+```
+(usually at `<Stack>` from expo-router)
+
+**Cause:** `react-native-screens` versions 4.17.0 and above are incompatible with Expo SDK 54.
+
+**Fix:** Pin to 4.16.0:
+```bash
+npm install react-native-screens@4.16.0 --save-exact
+```
+
+If you see this error, run the fix above, then restart Metro (`kill $(lsof -ti :8081)` then start again). The `--save-exact` flag prevents npm from upgrading it back to a broken version on the next install.
+
+### Expo's `--tunnel` crashes with "Cannot read properties of undefined"
+
+The built-in tunnel bundles an ancient ngrok version. Use the `expo-apps-buddy:custom-ngrok-tunnel` skill instead.
+
 ## Project Rules
 
 - Always follow `expo:building-native-ui` patterns (load the skill silently)
@@ -276,3 +305,4 @@ tail -40 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
 - Auto-save after every working change
 - Never leave the project in a broken state
 - **Always pipe Metro output to a temp log file** (see above) so you can read errors directly
+- **Never upgrade `react-native-screens` above 4.16.0** on SDK 54 projects

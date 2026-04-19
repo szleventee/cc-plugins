@@ -59,6 +59,10 @@ Install core libraries plus extras for proper native-quality UI:
 ```bash
 npx expo install expo-router expo-linear-gradient expo-status-bar expo-haptics expo-image react-native-safe-area-context react-dom react-native-web @expo/metro-runtime
 npm install @expo/ngrok
+
+# Pin react-native-screens to 4.16.0 — 4.17.x+ has a known crash on Expo SDK 54
+# ("expected dynamic type 'boolean', but had type 'string'" at <Stack>)
+npm install react-native-screens@4.16.0 --save-exact
 ```
 
 **Library choices (from building-native-ui guidelines):**
@@ -66,6 +70,7 @@ npm install @expo/ngrok
 - `expo-image` — use for SF Symbols on native (`source="sf:name"`) and optimized images
 - `expo-haptics` — tactile feedback on iOS for a polished feel
 - Do NOT install `@expo/vector-icons` — prefer `expo-image` with SF Symbols on native, or inline emoji/SVG for cross-platform
+- `react-native-screens@4.16.0` is pinned — **do not upgrade** to 4.17.x+ until the Stack crash is fixed upstream
 
 ### Step 4: Configure Expo Router
 

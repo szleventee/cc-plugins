@@ -98,6 +98,34 @@ After restarting Metro, tell the user: *"Restarted the server — shake your pho
 - ✅ "All set — your change should already be live on the phone."
 - ✅ "I restarted the server. If you don't see the change in 5 seconds, shake + Reload."
 
+### ALWAYS check Metro logs proactively (don't wait to be asked)
+
+The Metro log file holds the truth: what JS errors fire, what `console.log()` from the app shows, what the user actually does/sees on the phone. **Read it on your own initiative every single time** the user says ANY of:
+
+- "I tried it" / "it ran" / "I tested it"
+- "it's not working" / "weird" / "stuck" / "fagyott" / "lefagyott"
+- "what's happening?" / "it gave me X result"
+- After ANY tap/action they describe taking on the phone
+- After a code change they should be testing
+
+**Do NOT rely on the user to copy-paste logs.** They are a beginner — they don't know what to look for or what's relevant. You are the one who knows. Open the log file and grep for the relevant section yourself.
+
+```bash
+# Find the most recent Metro background-task log file (the one Claude started)
+ls -t /tmp/claude-501/*/tasks/*.output 2>/dev/null | head -3
+
+# Or if Metro was started with our pattern:
+tail -80 "$(ls -t /tmp/claude-501/*/tasks/*.output 2>/dev/null | head -1)"
+
+# Or if Metro was started via the EXPO_LOG_FILE pattern from this skill:
+tail -80 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
+
+# Grep for the recent app activity:
+grep -E "LOG|ERROR|WARN" "$(ls -t /tmp/claude-501/*/tasks/*.output 2>/dev/null | head -1)" | tail -50
+```
+
+Then summarize what happened in plain language for the user. Do NOT make them paste logs back — read the log yourself first, ALWAYS. If you can't find the log file, ask which way Metro was started, but don't ask the user to paste anything.
+
 ## Auto-Save (Git Commits)
 
 **CRITICAL: Auto-save progress after EVERY successful change.** This is the safety net. Work should never be lost.

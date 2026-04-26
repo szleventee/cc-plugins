@@ -235,55 +235,58 @@ Create `.claude/launch.json` for web preview.
 }
 ```
 
-### Step 7: Write CLAUDE.md
+### Step 7: Write CLAUDE.md (keep it LEAN)
 
-Create a `CLAUDE.md` in the project root:
+Create a `CLAUDE.md` in the project root. **Keep it project-specific.** Generic Expo guidance, Metro/ngrok instructions, beginner principles, and translation tables all live in the `expo-apps-buddy` plugin and load automatically — do NOT repeat them here.
+
+A project's CLAUDE.md should answer: *"What is this specific app, where am I in building it, and what's special about it that the plugin doesn't already know?"*
 
 ```markdown
-# My Expo App
+# <App Name>
 
-## What is this?
-This is a mobile app built with Expo and React Native using Expo Router for navigation.
+<One-sentence description of what this app does.>
 
-## How to Run
-- Ask Claude "show me my app" to see it in the web preview
-- To test on your phone: ask Claude "start expo for my phone" — then scan the QR code with Expo Go app
+## 🎯 Where we're at
 
-## How to Build Things
-Just ask Claude! Try things like:
-- "Add a new screen that shows the current time"
-- "Add tabs to the app"
-- "Change the colors to blue and purple"
-- "Add a settings page"
+- ✅ <thing already built>
+- ✅ <thing already built>
+- 🚧 <thing in progress>
+- 💡 <ideas to try next>
 
-## UI Guidelines
-This project follows the `expo:building-native-ui` skill. Key rules:
-- Use Expo Router (`app/` directory) for all screens
-- Inline styles, not StyleSheet.create
-- Pressable, not TouchableOpacity
-- useWindowDimensions, not Dimensions.get()
-- ScrollView with contentInsetAdjustmentBehavior="automatic"
-- boxShadow CSS style, not legacy shadow props
-- borderCurve: "continuous" on rounded corners
-- expo-haptics for tactile feedback on iOS
-- Stack.Screen options for page titles
+## 📁 Project files (only the ones that matter)
 
-## Key Commands
-- `npx expo start --web` — run in browser
-- `npx expo start` — run for Expo Go on phone
-- `npx expo start --tunnel` — run for phone over mobile internet
+| File | What it does |
+|------|--------------|
+| `app/index.tsx` | Main screen — <one-line summary> |
+| `app/<other-screen>.tsx` | <one-line summary> |
+| `lib/<utility>.ts` | <one-line summary> |
 
-## Testing on Your Phone
-1. Install "Expo Go" from App Store or Play Store
-2. **Same Wi-Fi:** run `npx expo start`, scan QR code
-3. **Different network:** run `npx expo start --tunnel`, use the tunnel URL
+## 🔑 Project-specific environment
 
-## Project Structure
-- `app/_layout.tsx` — Root navigation layout
-- `app/index.tsx` — Main screen
-- `app.json` — App settings
-- `assets/` — Images and icons
+<Only if there's anything custom — ngrok subdomain, API keys location,
+required env vars, etc. Otherwise omit this section entirely.>
+
+## 🐛 Known bugs (this project)
+
+<Only project-specific bugs and their fixes. Generic Expo bugs go in
+the plugin's beginner-guide. If there are no project-specific bugs,
+omit this section.>
+
+## 🎬 What this app does (user flow)
+
+<A short walk-through of the main user journey, if it helps future
+sessions pick up faster.>
 ```
+
+**Things NOT to put in CLAUDE.md** (the plugin handles these):
+- How auto-save / commits / undo work
+- Beginner-friendly translations
+- "Claude is the dev server caretaker" instructions
+- Generic Metro/ngrok start/restart commands
+- How to bump or publish the plugin
+- React Native UI guidelines (these come from `expo:building-native-ui`)
+
+The leaner the project's CLAUDE.md, the more the plugin is doing its job.
 
 ### Step 8: Start the Preview
 

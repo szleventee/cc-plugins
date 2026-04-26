@@ -16,10 +16,41 @@ Manages the expo-apps-buddy Claude Code plugin — versioning, publishing, and r
 
 ## Plugin File Locations
 
-- **Marketplace index:** `.claude-plugin/marketplace.json`
-- **Plugin manifest:** `plugins/expo-apps-buddy/.claude-plugin/plugin.json`
-- **Skills:** `plugins/expo-apps-buddy/skills/`
-- **GitHub repo:** `szleventee/cc-plugins`
+The plugin source is a real **git working copy** of `szleventee/cc-plugins` that lives on the user's Mac at:
+
+```
+~/.claude/plugins/marketplaces/cc-plugins/
+├── .claude-plugin/marketplace.json          ← marketplace index
+└── plugins/expo-apps-buddy/
+    ├── .claude-plugin/plugin.json           ← plugin manifest (version)
+    ├── README.md
+    └── skills/
+        ├── beginner-guide/SKILL.md
+        ├── custom-ngrok-tunnel/SKILL.md
+        ├── expo-setup/SKILL.md
+        └── plugin-manager/SKILL.md          ← this file
+```
+
+**GitHub repo:** `https://github.com/szleventee/cc-plugins`
+
+This means **anywhere the plugin is installed**, you can:
+1. Edit the SKILL.md files directly
+2. `git commit` and `git push` them to GitHub
+3. Reload the plugin
+
+…and the changes will land on every Mac where the plugin is installed (after each one runs the reload commands). **You don't need to be on a "special" machine or in a "special" project to fix the plugin** — fix it from wherever you noticed the issue.
+
+### Verify the source is there before editing
+
+```bash
+ls ~/.claude/plugins/marketplaces/cc-plugins/plugins/expo-apps-buddy/skills/
+# Should list: beginner-guide  custom-ngrok-tunnel  expo-setup  plugin-manager
+
+cd ~/.claude/plugins/marketplaces/cc-plugins && git remote -v
+# Should show: origin  https://github.com/szleventee/cc-plugins.git (fetch/push)
+```
+
+If `git remote -v` shows nothing or the directory is missing, the plugin was probably installed from a different marketplace — stop and ask the user.
 
 ## Version Bumping
 
@@ -106,3 +137,47 @@ claude plugin install expo-apps-buddy@cc-plugins
 2. Bump the minor version
 3. Commit and push
 4. Run the reload commands
+
+## When to fix the plugin vs. the current project
+
+While working on any user's app, you'll often notice friction or missing behavior. Decide where the fix belongs:
+
+**Fix in the plugin** (here, in `~/.claude/plugins/marketplaces/cc-plugins/`) when the issue is:
+- A missing default in `expo-setup` (e.g. a package every project should have)
+- A behavior pattern that should apply to every beginner session (e.g. how Claude restarts Metro)
+- A common pitfall mentioned in `beginner-guide` known-issues
+- Anything that, if left only in the project's `CLAUDE.md`, would have to be re-discovered in the next project
+
+**Fix in the project** (e.g. `<project>/CLAUDE.md`) when the issue is:
+- Specific to this app's domain (custom ngrok subdomain, particular meme list, this project's API key)
+- A workaround that's still being validated and isn't yet generalizable
+- Something the user explicitly says is "just for this project"
+
+### The conversation flow
+
+When you spot something that smells plugin-shaped:
+
+1. Make the fix work in the current project first (so the user is unblocked)
+2. Once the user confirms it works on their phone/web, propose: *"This feels like a plugin-level fix — want me to bake it into expo-apps-buddy v1.x.y so every future project gets it for free?"*
+3. If yes: edit the SKILL.md files, bump version, commit, ask the user to push (or push if you have auth), run reload commands
+4. After the plugin gains the behavior, **strip the duplicated content from the project's CLAUDE.md** — it's now inherited.
+
+## CLAUDE.md philosophy (project-level)
+
+Once a behavior moves into the plugin, the project's `CLAUDE.md` should NOT repeat it. Project-level `CLAUDE.md` files should stay lean and contain only:
+
+- 🎯 What the app is and what it does
+- 📍 Where the project currently is (current state, what's working, what's WIP)
+- 📁 Project-specific file map (only the files that matter for this app)
+- 🔑 Project-specific environment (custom ngrok domain, API keys location, etc.)
+- 🐛 Project-specific known bugs and their fixes
+- 🎬 Project-specific user flows or behavior
+
+The project's `CLAUDE.md` should NOT contain:
+- ❌ How auto-save / git commits work (plugin handles this)
+- ❌ Beginner-friendly translation tables (plugin handles this)
+- ❌ Generic "Claude as dev server caretaker" instructions (plugin handles this)
+- ❌ Generic Metro/ngrok start/restart commands (plugin handles this)
+- ❌ How to bump versions / publish the plugin (this skill handles that)
+
+Keeping project `CLAUDE.md` lean is also a good way to **measure how well the plugin works**: the more empty / minimal a project's `CLAUDE.md` is, the more the plugin is doing its job.

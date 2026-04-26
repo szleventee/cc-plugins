@@ -164,6 +164,73 @@ kill $(lsof -ti :8081) 2>/dev/null
 kill $(lsof -ti :4040) 2>/dev/null  # ngrok web UI
 ```
 
+## Health Check + Restart Patterns (use these throughout the session)
+
+**You (Claude) own the lifecycle of these processes.** The user — especially a beginner — should never run terminal commands themselves. Check on Metro and ngrok proactively, and recover when things go wrong.
+
+### Health check (run at session start and whenever something feels off)
+
+```bash
+# Are both processes actually running?
+ps aux | grep -E "(ngrok http|expo start)" | grep -v grep
+
+# Does the tunnel respond?
+curl -s -o /dev/null -w "Tunnel: HTTP %{http_code}\n" https://<domain>/status
+
+# Expected good response:
+#   - 1 ngrok process, 1 expo process
+#   - Tunnel: HTTP 200
+#   - curl https://<domain>/status returns "packager-status:running"
+```
+
+If the user reports something weird, check this first before assuming the code is broken.
+
+### Full restart (when Metro is stuck, env vars lost, or code feels stale)
+
+Always use `run_in_background: true` for these so they keep running after the Bash tool returns.
+
+```bash
+# 1. Kill everything cleanly
+pkill -f "expo start" 2>/dev/null
+pkill -f "ngrok http" 2>/dev/null
+sleep 2
+
+# 2. Start ngrok (background)
+ngrok http --url=<domain> 8081 --log=stdout > /tmp/ngrok.log 2>&1
+
+# 3. Start Metro with the tunnel env vars (background)
+cd <PROJECT_PATH> && \
+  REACT_NATIVE_PACKAGER_HOSTNAME=<domain> \
+  EXPO_PACKAGER_PROXY_URL=https://<domain> \
+  npx expo start --port 8081 --dev-client
+```
+
+### Just restart Metro (most common case — code change that needs a fresh bundler)
+
+```bash
+pkill -f "expo start" 2>/dev/null
+sleep 1
+cd <PROJECT_PATH> && \
+  REACT_NATIVE_PACKAGER_HOSTNAME=<domain> \
+  EXPO_PACKAGER_PROXY_URL=https://<domain> \
+  npx expo start --port 8081 --dev-client
+```
+
+After 5-8 seconds, verify `curl https://<domain>/status` returns `packager-status:running`. Then tell the user: "📱 Shake + Reload to pick up the restart."
+
+### --dev-client vs default
+
+If `expo-dev-client` is installed (which the `expo-setup` skill does by default), append `--dev-client` to `expo start` so Metro serves to the dev client app instead of Expo Go. The dev client gives users the modern launcher UI on shake.
+
+## Don't make the user open a terminal
+
+Even if a user asks "what command should I run?", the answer is almost always "**nothing — I'll do it.**" Then run the command yourself with `run_in_background: true`. The only time you ask the user to do something is when the action genuinely requires their device:
+
+- Open Xcode and click Run (for native rebuilds)
+- Open the app on their phone
+- Shake the phone for the dev menu
+- Tap a button in the dev launcher
+
 ## Troubleshooting
 
 - **"Cannot read properties of undefined"** when using `npx expo start --tunnel` — that's the bundled old ngrok. Use this skill instead.

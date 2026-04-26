@@ -57,7 +57,7 @@ After creation, run `npm install` to make sure node_modules is correct.
 Install core libraries plus extras for proper native-quality UI:
 
 ```bash
-npx expo install expo-router expo-linear-gradient expo-status-bar expo-haptics expo-image react-native-safe-area-context react-dom react-native-web @expo/metro-runtime
+npx expo install expo-router expo-linear-gradient expo-status-bar expo-haptics expo-image react-native-safe-area-context react-dom react-native-web @expo/metro-runtime expo-dev-client
 npm install @expo/ngrok
 
 # Pin react-native-screens to 4.16.0 — 4.17.x+ has a known crash on Expo SDK 54
@@ -69,8 +69,29 @@ npm install react-native-screens@4.16.0 --save-exact
 - `expo-router` — native navigation stacks, tabs, and routing
 - `expo-image` — use for SF Symbols on native (`source="sf:name"`) and optimized images
 - `expo-haptics` — tactile feedback on iOS for a polished feel
+- `expo-dev-client` — **REQUIRED** for the modern dev launcher UI on the phone (cards, deep-link list, fast-refresh toggle, etc.). Without it, shaking the phone shows the old plain ActionSheet menu.
 - Do NOT install `@expo/vector-icons` — prefer `expo-image` with SF Symbols on native, or inline emoji/SVG for cross-platform
 - `react-native-screens@4.16.0` is pinned — **do not upgrade** to 4.17.x+ until the Stack crash is fixed upstream
+
+#### Verify expo-dev-client made it in
+
+After install, double-check:
+
+```bash
+grep -q '"expo-dev-client"' package.json \
+  && echo "✅ expo-dev-client present" \
+  || echo "⚠️ MISSING expo-dev-client — dev menu will look ancient"
+```
+
+If a project skipped this step (e.g. older setup), retroactively add it with:
+
+```bash
+npx expo install expo-dev-client
+# Then re-run prebuild + pod install if iOS already exists:
+npx expo prebuild --platform ios --no-install
+cd ios && LANG=en_US.UTF-8 pod install && cd ..
+# Then a full Xcode rebuild is required
+```
 
 ### Step 4: Configure Expo Router
 

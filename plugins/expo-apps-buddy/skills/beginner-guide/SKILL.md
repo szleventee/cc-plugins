@@ -197,7 +197,7 @@ Follow this flow:
 ## When Something Breaks
 
 1. **Stay calm and friendly.** "Hmm, something's not working right. Let me take a look! 🔍"
-2. **Check the Expo log file** for errors. If the app is running via tunnel, the log file path is stored in `$EXPO_LOG_FILE` (typically `/tmp/expo-tunnel-*.log`). Read it:
+2. **Check the Expo log file** for errors. The log file path is stored in `$EXPO_LOG_FILE` (typically `/tmp/expo-metro-*.log`). Read it:
    ```bash
    # Find the most recent expo log
    ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1
@@ -207,9 +207,23 @@ Follow this flow:
    grep -i "error\|warn\|failed\|exception" "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
    ```
    If running via web preview, use `preview_logs` and `preview_console_logs` instead.
-3. **Explain what happened simply.** "The app got confused because I accidentally told it to use something that doesn't exist. Easy fix!"
-4. **Fix it and show the result.**
-5. **If you can't fix it quickly**, offer to undo: "I'm having trouble fixing this. Want me to go back to the last save point where everything worked?"
+3. **Cross-reference the log against Known Errors below BEFORE investigating.** Most crashes are one of a handful of known issues — check the table first so you don't waste time debugging a solved problem.
+4. **Explain what happened simply.** "The app got confused because I accidentally told it to use something that doesn't exist. Easy fix!"
+5. **Fix it and show the result.**
+6. **If you can't fix it quickly**, offer to undo: "I'm having trouble fixing this. Want me to go back to the last save point where everything worked?"
+
+### Known Errors (check these FIRST when something crashes)
+
+| Error signal in log | Fix |
+|---|---|
+| `TypeError: expected dynamic type 'boolean', but had type 'string'` (usually at `<Stack>`) | `npm install react-native-screens@4.16.0 --save-exact` — 4.17.x+ is broken on SDK 54 |
+| `newArchEnabled: false` warning in Expo Go | Remove the `newArchEnabled` field from `app.json` entirely (Expo Go assumes it based on SDK version) |
+| `CommandError: failed to start tunnel` / `remote gone away` / `Cannot read properties of undefined` when using `--tunnel` | Expo's bundled ngrok is broken — use the `expo-apps-buddy:custom-ngrok-tunnel` skill instead |
+| `Unable to resolve module` after adding a package | Restart Metro with cache clear: `kill $(lsof -ti :8081); npx expo start --clear` (remember to still pipe to log file) |
+| `Invalid package config` when starting Metro (paths with spaces, iCloud) | Run `npm install` again, then retry — or move the project out of an iCloud-synced folder |
+| Port 8081 already in use | `kill $(lsof -ti :8081)` then restart Metro |
+
+When you add a new known error here, keep the signal column short and greppable — something you'd actually spot in a log scan.
 
 ## Teaching Moments (Optional, Brief)
 
@@ -332,29 +346,6 @@ grep -i "error\|warn\|failed\|exception" "$EXPO_LOG_FILE"
 ```bash
 tail -40 "$(ls -t /tmp/expo-metro-*.log 2>/dev/null | head -1)"
 ```
-
-## Known Issues & Fixes
-
-### react-native-screens 4.17.x+ crash on Expo SDK 54
-
-**Symptom:** App crashes immediately on load with error:
-```
-expected dynamic type 'boolean', but had type 'string'
-```
-(usually at `<Stack>` from expo-router)
-
-**Cause:** `react-native-screens` versions 4.17.0 and above are incompatible with Expo SDK 54.
-
-**Fix:** Pin to 4.16.0:
-```bash
-npm install react-native-screens@4.16.0 --save-exact
-```
-
-If you see this error, run the fix above, then restart Metro (`kill $(lsof -ti :8081)` then start again). The `--save-exact` flag prevents npm from upgrading it back to a broken version on the next install.
-
-### Expo's `--tunnel` crashes with "Cannot read properties of undefined"
-
-The built-in tunnel bundles an ancient ngrok version. Use the `expo-apps-buddy:custom-ngrok-tunnel` skill instead.
 
 ## Project Rules
 
